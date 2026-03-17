@@ -331,7 +331,7 @@ export default function App() {
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="flex flex-col h-screen overflow-hidden bg-cyber-bg scanline relative theme-container"
+            className="flex flex-col min-h-screen md:h-screen overflow-y-auto md:overflow-hidden bg-cyber-bg scanline relative theme-container"
           >
             <FloatingParticles />
 

@@ -76,10 +76,8 @@ export default function Navbar({
           </div>
         </div>
 
-        <div className="h-8 w-[1px] bg-cyber-border mx-1 md:mx-2 hidden sm:block" />
-
-        <div className="flex items-center gap-2 md:gap-4">
-          <div className="relative group hidden sm:block">
+        <div className="flex items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar py-1">
+          <div className="relative group shrink-0">
             <div className="absolute -inset-0.5 bg-neon-cyan/20 rounded-md blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
             <select
               value={language}
@@ -99,20 +97,19 @@ export default function Navbar({
             onClick={onRun}
             disabled={isRunning}
             className={`
-              relative group flex items-center gap-1 md:gap-2 px-3 md:px-5 py-1 md:py-1.5 rounded-md font-bold text-[10px] md:text-xs uppercase tracking-widest transition-all
+              relative group flex items-center gap-1 md:gap-2 px-2 md:px-5 py-1 md:py-1.5 rounded-md font-bold text-[9px] md:text-xs uppercase tracking-widest transition-all shrink-0
               ${isRunning 
                 ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
                 : 'bg-neon-green text-black hover:shadow-[0_0_20px_rgba(0,255,159,0.6)] active:scale-95'}
             `}
           >
-            <Play size={12} fill="currentColor" />
-            <span className="hidden xs:inline">{isRunning ? 'Running...' : 'Run'}</span>
-            <span className="xs:hidden">{isRunning ? '...' : 'Run'}</span>
+            <Play size={10} fill="currentColor" />
+            <span className="">{isRunning ? '...' : 'Run'}</span>
           </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-1 md:gap-3">
+      <div className="flex items-center gap-1 md:gap-2 overflow-x-auto no-scrollbar pl-2">
         <button 
           onClick={onToggleAI}
           className={`p-2 rounded-md transition-all flex items-center gap-2 ${isAIOpen ? 'bg-neon-pink/20 text-neon-pink' : 'text-gray-400 hover:text-neon-pink hover:bg-neon-pink/10'}`}
@@ -122,27 +119,27 @@ export default function Navbar({
           <span className="text-[10px] font-bold uppercase tracking-tighter hidden md:inline">AI Assistant</span>
         </button>
 
-        <div className="hidden sm:flex items-center gap-1 md:gap-3">
+        <div className="flex items-center gap-1 md:gap-2 shrink-0">
           <button 
             onClick={onSave}
-            className="p-2 text-gray-400 hover:text-neon-cyan hover:bg-neon-cyan/10 rounded-md transition-all"
+            className="p-1.5 md:p-2 text-gray-400 hover:text-neon-cyan hover:bg-neon-cyan/10 rounded-md transition-all"
             title="Save Project"
           >
-            <Save size={18} />
+            <Save size={16} />
           </button>
           <button 
             onClick={onUpload}
-            className="p-2 text-gray-400 hover:text-neon-cyan hover:bg-neon-cyan/10 rounded-md transition-all"
+            className="p-1.5 md:p-2 text-gray-400 hover:text-neon-cyan hover:bg-neon-cyan/10 rounded-md transition-all"
             title="Upload File"
           >
-            <Upload size={18} />
+            <Upload size={16} />
           </button>
           <button 
             onClick={onDownload}
-            className="p-2 text-gray-400 hover:text-neon-cyan hover:bg-neon-cyan/10 rounded-md transition-all"
+            className="p-1.5 md:p-2 text-gray-400 hover:text-neon-cyan hover:bg-neon-cyan/10 rounded-md transition-all"
             title="Download File"
           >
-            <Download size={18} />
+            <Download size={16} />
           </button>
         </div>
 

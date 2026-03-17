@@ -9,7 +9,7 @@ interface LandingPageProps {
 
 export default function LandingPage({ onStart }: LandingPageProps) {
   return (
-    <div className="theme-container h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-grid">
+    <div className="theme-container min-h-screen w-full flex flex-col items-center justify-center relative overflow-y-auto md:overflow-hidden bg-grid py-20 md:py-0">
       <FloatingParticles />
 
       {/* Background Code Symbols */}

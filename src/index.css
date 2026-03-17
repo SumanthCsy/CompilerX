@@ -27,8 +27,16 @@
 
 @layer base {
   body {
-    @apply bg-cyber-bg text-gray-300 font-sans selection:bg-neon-cyan/30 overflow-hidden;
+    @apply bg-cyber-bg text-gray-300 font-sans selection:bg-neon-cyan/30 overflow-x-hidden overflow-y-auto md:overflow-hidden;
     background: radial-gradient(circle at 50% 50%, #151d29 0%, #0a0a0c 100%);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   ::-webkit-scrollbar {
