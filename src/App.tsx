@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import LandingPage from './components/LandingPage';
 import { FloatingParticles } from './components/FloatingParticles';
 import { Toast } from './components/Toast';
+import ShareModal from './components/ShareModal';
 
 const getLanguageFromExtension = (filename: string): string => {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
@@ -96,6 +97,8 @@ export default function App() {
   const [aiQuery, setAiQuery] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [currentShareUrl, setCurrentShareUrl] = useState('');
 
   const handleStartEditor = () => {
     sessionStorage.setItem('compilerx_started', 'true');
@@ -219,22 +222,15 @@ export default function App() {
       const data = await res.json();
 
       if (data.id) {
-        const shareUrl = `${window.location.origin}/?share=${data.id}`;
-
-        if (navigator.share) {
-          await navigator.share({
-            title: 'CompilerX Code',
-            text: 'Check out my code on CompilerX',
-            url: shareUrl
-          });
-        } else {
-          await navigator.clipboard.writeText(shareUrl);
-          alert('Shareable link copied to clipboard!\n\n' + shareUrl);
-        }
+        const shareUrl = `${window.location.origin}/editor?share=${data.id}`;
+        setCurrentShareUrl(shareUrl);
+        setIsShareModalOpen(true);
+      } else {
+        throw new Error("Invalid response from server");
       }
     } catch (err) {
       console.error('Error sharing', err);
-      alert('Failed to generate share link.');
+      alert('Failed to generate sharing transmission. Check backend connection.');
     }
   };
 
@@ -320,7 +316,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.5 } }}
-            className="h-full w-full"
+            className="min-h-screen w-full"
           >
             <LandingPage onStart={handleStartEditor} />
           </motion.div>
@@ -433,6 +429,12 @@ export default function App() {
                 <span className="text-gray-600">LN {activeFile?.content.split('\n').length || 0}, COL 1</span>
               </div>
             </footer>
+
+            <ShareModal 
+              isOpen={isShareModalOpen} 
+              onClose={() => setIsShareModalOpen(false)} 
+              shareUrl={currentShareUrl} 
+            />
           </motion.div>
         } />
       </Routes>

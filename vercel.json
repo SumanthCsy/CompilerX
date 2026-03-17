@@ -1,5 +1,7 @@
 {
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://compilerx-obyn.onrender.com/api/$1" },
+    { "source": "/socket.io/(.*)", "destination": "https://compilerx-obyn.onrender.com/socket.io/$1" },
     { "source": "/(.*)", "destination": "/" }
   ]
 }
