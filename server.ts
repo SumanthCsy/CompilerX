@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -13,7 +14,7 @@ const sharedSnippets = new Map<string, any[]>();
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
-  
+
   const httpServer = createHttpServer(app);
   const io = new SocketIOServer(httpServer, {
     cors: { origin: "*" }
@@ -30,7 +31,7 @@ async function startServer() {
     socket.on("run", async (data) => {
       const { language, files } = data;
       const mainFile = files[0];
-      
+
       try {
         tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "compilerx-"));
         tempFile = path.join(tempDir, mainFile.name);
@@ -48,9 +49,9 @@ async function startServer() {
         } else if (language === "c" || language === "cpp") {
           cmd = os.platform() === "win32" ? "cmd.exe" : "sh";
           if (os.platform() === "win32") {
-             args = ["/c", `gcc "${tempFile}" -o "${tempDir}\\a.exe" && "${tempDir}\\a.exe"`];
+            args = ["/c", `gcc "${tempFile}" -o "${tempDir}\\a.exe" && "${tempDir}\\a.exe"`];
           } else {
-             args = ["-c", `gcc "${tempFile}" -o "${tempDir}/a.out" && "${tempDir}/a.out"`];
+            args = ["-c", `gcc "${tempFile}" -o "${tempDir}/a.out" && "${tempDir}/a.out"`];
           }
         } else {
           cmd = os.platform() === "win32" ? "python.exe" : "python3";
@@ -93,7 +94,7 @@ async function startServer() {
     socket.on("disconnect", () => {
       if (ptyProcess) ptyProcess.kill();
       if (tempDir) {
-        try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch(e){}
+        try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch (e) { }
       }
     });
   });
@@ -102,7 +103,7 @@ async function startServer() {
   app.post("/api/compile", async (req, res) => {
     const { language, version, files, stdin } = req.body;
     const mainFile = files[0];
-    
+
     // Language mapping for CodeX
     const codexMap: Record<string, string> = {
       'python': 'py',
@@ -169,11 +170,24 @@ async function startServer() {
     if (judge0Id) {
       try {
         console.log(`Attempting Judge0 execution for ${language}...`);
-        const judgeResponse = await axios.post("https://ce.judge0.com/submissions?base64_encoded=false&wait=true", {
+        const rapidApiKey = process.env.RAPIDAPI_KEY;
+        const rapidApiHost = process.env.RAPIDAPI_HOST;
+        const judge0Url = rapidApiKey
+          ? `https://${rapidApiHost}/submissions?base64_encoded=false&wait=true`
+          : "https://ce.judge0.com/submissions?base64_encoded=false&wait=true";
+
+        const judgeResponse = await axios.post(judge0Url, {
           source_code: mainFile.content,
           language_id: judge0Id,
           stdin: stdin || ""
-        }, { timeout: 15000 });
+        }, {
+          headers: rapidApiKey ? {
+            'x-rapidapi-key': rapidApiKey,
+            'x-rapidapi-host': rapidApiHost,
+            'Content-Type': 'application/json',
+          } : {},
+          timeout: 15000
+        });
 
         const data = judgeResponse.data;
         if (data && (data.stdout || data.stderr || data.compile_output || data.status)) {
@@ -212,7 +226,7 @@ async function startServer() {
             const runtimesResponse = await axios.get(RUNTIMES_URL, { timeout: 2000 });
             const runtime = runtimesResponse.data.find((r: any) => r.language === language || r.aliases.includes(language));
             if (runtime) resolvedVersion = runtime.version;
-          } catch (e) {}
+          } catch (e) { }
         }
 
         const response = await axios.post(EXECUTE_URL, {

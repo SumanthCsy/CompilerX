@@ -75,6 +75,20 @@ export default function Terminal({ activeFile, runTrigger, onExecutionStart, onE
   useEffect(() => {
     if (runTrigger === 0 || !activeFile) return;
 
+    const JUDGE0_MAP: Record<string, number> = {
+      'python': 71,
+      'javascript': 63,
+      'cpp': 54,
+      'c': 50,
+      'java': 62,
+      'go': 60,
+      'csharp': 51,
+      'ruby': 72,
+      'rust': 73,
+      'php': 68,
+      'typescript': 74
+    };
+
     const runStateless = async () => {
       const xterm = xtermRef.current;
       if (!xterm) return;
@@ -89,7 +103,7 @@ export default function Terminal({ activeFile, runTrigger, onExecutionStart, onE
           language: activeFile.language,
           version: '*',
           files: [{ name: activeFile.name, content: activeFile.content }],
-        }, { timeout: 20000 });
+        }, { timeout: 15000 });
 
         const { run } = response.data;
         const output = (run.stdout || '') + (run.stderr || '');
@@ -99,6 +113,41 @@ export default function Terminal({ activeFile, runTrigger, onExecutionStart, onE
         setLastOutput(output);
         xterm.writeln(`\r\n\x1b[1m\x1b[90m[Process exited with code ${run.code ?? 0}]\x1b[0m`);
       } catch (err: any) {
+        // Fallback to RapidAPI if backend is sleeping or fails
+        const rapidApiKey = import.meta.env.VITE_RAPIDAPI_KEY;
+        const rapidApiHost = import.meta.env.VITE_RAPIDAPI_HOST;
+        const judge0Id = JUDGE0_MAP[activeFile.language];
+
+        if (rapidApiKey && rapidApiHost && judge0Id) {
+          try {
+            const rapidResponse = await axios.post(`https://${rapidApiHost}/submissions?base64_encoded=false&wait=true`, {
+              source_code: activeFile.content,
+              language_id: judge0Id,
+              stdin: "",
+            }, {
+              headers: {
+                'x-rapidapi-key': rapidApiKey,
+                'x-rapidapi-host': rapidApiHost,
+                'Content-Type': 'application/json',
+              },
+              timeout: 15000
+            });
+
+            const data = rapidResponse.data;
+            const output = (data.stdout || '') + (data.stderr || '') + (data.compile_output || '');
+            
+            if (data.stdout) xterm.write(data.stdout);
+            if (data.stderr || data.compile_output) xterm.write('\x1b[31m' + (data.stderr || data.compile_output) + '\x1b[0m');
+            
+            setLastOutput(output);
+            xterm.writeln(`\r\n\x1b[1m\x1b[90m[RapidAPI: Process exited with status ${data.status?.description || 'Finished'}]\x1b[0m`);
+            return;
+          } catch (fallbackErr: any) {
+            console.error('RapidAPI Fallback Error:', fallbackErr);
+            xterm.writeln('\x1b[31mRapidAPI Fallback Failed: ' + (fallbackErr.message || 'Unknown Error') + '\x1b[0m');
+          }
+        }
+
         const errMsg = err.response?.data?.message || err.message;
         xterm.writeln('\x1b[31mCloud Execution Error: ' + errMsg + '\x1b[0m');
         setLastOutput('Execution Error: ' + errMsg);
