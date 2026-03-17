@@ -35,7 +35,7 @@ export default function AIChat({ activeFile, onApplyCode, onClose, initialQuery,
   }, [messages, showSettings]);
 
   useEffect(() => {
-    if (initialQuery && !isLoading && !showSettings) {
+    if (initialQuery && !isLoading) {
       handleSend(initialQuery);
       if (onClearQuery) onClearQuery();
     }

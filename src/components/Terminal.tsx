@@ -85,22 +85,23 @@ export default function Terminal({ activeFile, runTrigger, onExecutionStart, onE
       xterm.writeln('\x1b[90m[Using Cloud Neural Core for execution...]\x1b[0m');
 
       try {
-        // Fallback chain: Piston -> CodeX -> Judge0 (Stateless Client-side)
-        const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
+        const response = await axios.post('/api/compile', {
           language: activeFile.language,
           version: '*',
           files: [{ name: activeFile.name, content: activeFile.content }],
-        }, { timeout: 15000 });
+        }, { timeout: 20000 });
 
         const { run } = response.data;
+        const output = (run.stdout || '') + (run.stderr || '');
         if (run.stdout) xterm.write(run.stdout);
         if (run.stderr) xterm.write('\x1b[31m' + run.stderr + '\x1b[0m');
         
-        setLastOutput(run.stdout + run.stderr);
-        xterm.writeln(`\r\n\x1b[1m\x1b[90m[Process exited with code ${run.code}]\x1b[0m`);
+        setLastOutput(output);
+        xterm.writeln(`\r\n\x1b[1m\x1b[90m[Process exited with code ${run.code ?? 0}]\x1b[0m`);
       } catch (err: any) {
-        xterm.writeln('\x1b[31mCloud Execution Error: ' + err.message + '\x1b[0m');
-        xterm.writeln('\x1b[90mTip: For interactive terminal support, host the CompilerX backend on a dedicated server.\x1b[0m');
+        const errMsg = err.response?.data?.message || err.message;
+        xterm.writeln('\x1b[31mCloud Execution Error: ' + errMsg + '\x1b[0m');
+        setLastOutput('Execution Error: ' + errMsg);
       } finally {
         onExecutionEnd();
         setHasExited(true);
