@@ -3,6 +3,7 @@ import { Terminal as TerminalIcon, Trash2, StopCircle, Sparkles } from 'lucide-r
 import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { io, Socket } from 'socket.io-client';
+import axios from 'axios';
 import { FileNode } from '../types';
 import '@xterm/xterm/css/xterm.css';
 
@@ -23,6 +24,7 @@ export default function Terminal({ activeFile, runTrigger, onExecutionStart, onE
   const [isTermReady, setIsTermReady] = useState(false);
   const [lastOutput, setLastOutput] = useState('');
   const [hasExited, setHasExited] = useState(false);
+  const [isStateless, setIsStateless] = useState(false);
 
   // Initialize Terminal
   useEffect(() => {
@@ -73,11 +75,58 @@ export default function Terminal({ activeFile, runTrigger, onExecutionStart, onE
   useEffect(() => {
     if (runTrigger === 0 || !activeFile) return;
 
+    const runStateless = async () => {
+      const xterm = xtermRef.current;
+      if (!xterm) return;
+
+      onExecutionStart();
+      setHasExited(false);
+      setIsStateless(true);
+      xterm.writeln('\x1b[90m[Using Cloud Neural Core for execution...]\x1b[0m');
+
+      try {
+        // Fallback chain: Piston -> CodeX -> Judge0 (Stateless Client-side)
+        const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
+          language: activeFile.language,
+          version: '*',
+          files: [{ name: activeFile.name, content: activeFile.content }],
+        }, { timeout: 15000 });
+
+        const { run } = response.data;
+        if (run.stdout) xterm.write(run.stdout);
+        if (run.stderr) xterm.write('\x1b[31m' + run.stderr + '\x1b[0m');
+        
+        setLastOutput(run.stdout + run.stderr);
+        xterm.writeln(`\r\n\x1b[1m\x1b[90m[Process exited with code ${run.code}]\x1b[0m`);
+      } catch (err: any) {
+        xterm.writeln('\x1b[31mCloud Execution Error: ' + err.message + '\x1b[0m');
+        xterm.writeln('\x1b[90mTip: For interactive terminal support, host the CompilerX backend on a dedicated server.\x1b[0m');
+      } finally {
+        onExecutionEnd();
+        setHasExited(true);
+      }
+    };
+
     if (socketRef.current) {
       socketRef.current.disconnect();
     }
 
-    const socket = io(window.location.origin);
+    // Determine backend URL
+    const backendUrl = (import.meta as any).env.VITE_BACKEND_URL || window.location.origin;
+    
+    // Check if we are on a static host without a custom backend
+    const isStaticHost = window.location.hostname.includes('vercel.app') || 
+                         window.location.hostname.includes('netlify.app');
+    
+    if (isStaticHost && ! (import.meta as any).env.VITE_BACKEND_URL) {
+      runStateless();
+      return;
+    }
+
+    const socket = io(backendUrl, {
+      timeout: 5000,
+      reconnectionAttempts: 2
+    });
     socketRef.current = socket;
     
     const xterm = xtermRef.current;
@@ -85,22 +134,41 @@ export default function Terminal({ activeFile, runTrigger, onExecutionStart, onE
 
     xterm.clear();
     xterm.writeln('\x1b[1m\x1b[38;2;0;255;159m>_ \x1b[38;2;255;255;255mExecuting \x1b[38;2;0;243;255m' + activeFile.name + '\x1b[0m\r\n');
-    onExecutionStart();
-    setLastOutput('');
-    setHasExited(false);
+    setIsStateless(false);
 
-    socket.emit('run', {
-      language: activeFile.language,
-      files: [{ name: activeFile.name, content: activeFile.content }]
+    let connectionTimeout = setTimeout(() => {
+      if (!socket.connected) {
+        xterm.writeln('\x1b[33m⚡ State-link failed. Switching to Cloud Neural Core...\x1b[0m');
+        socket.disconnect();
+        runStateless();
+      }
+    }, 3000);
+
+    socket.on('connect', () => {
+      clearTimeout(connectionTimeout);
+      onExecutionStart();
+      setLastOutput('');
+      setHasExited(false);
+      socket.emit('run', {
+        language: activeFile.language,
+        files: [{ name: activeFile.name, content: activeFile.content }]
+      });
+    });
+
+    socket.on('connect_error', () => {
+      clearTimeout(connectionTimeout);
+      xterm.writeln('\x1b[33m⚡ Connection refused. Switching to Cloud Neural Core...\x1b[0m');
+      socket.disconnect();
+      runStateless();
     });
 
     const dataDisposable = xterm.onData(data => {
-      socket.emit('data', data);
+      if (socket.connected) socket.emit('data', data);
     });
 
     socket.on('data', (data) => {
       xterm.write(data);
-      setLastOutput(prev => (prev + data).slice(-2000)); // Keep last 2KB
+      setLastOutput(prev => (prev + data).slice(-2000));
     });
 
     socket.on('exit', ({ exitCode }) => {
@@ -113,7 +181,9 @@ export default function Terminal({ activeFile, runTrigger, onExecutionStart, onE
     });
 
     return () => {
+      clearTimeout(connectionTimeout);
       dataDisposable.dispose();
+      if (socketRef.current) socketRef.current.disconnect();
     };
 
   }, [runTrigger]);
