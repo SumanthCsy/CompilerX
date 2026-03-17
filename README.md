@@ -1,20 +1,21 @@
 # 🌌 CompilerX: Extreme AI Neural IDE
 
 <p align="center">
-  <a href="https://compilerx.vercel.app">
+  <a href="https://compilerrx.vercel.app">
     <img src="./public/demo_link.svg" width="600" alt="Launch Live Demo" />
   </a>
 </p>
 
-**URL :** [compilerx.vercel.app](https://compilerx.vercel.app)
+**Primary URL (Vercel):** [compilerrx.vercel.app](https://compilerrx.vercel.app)  
+**Mirror (Netlify):** [compilerx.netlify.app](https://compilerx.netlify.app)
 
 <div align="center">
 
 ![CompilerX Hero](Screenshots/CompilerX.png)
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-00f3ff?style=for-the-badge&logo=vercel)](https://compilerx.vercel.app)
-[![Tech Stack](https://img.shields.io/badge/Stack-TypeScript%20%7C%20React%20%7C%20Node-bc13fe?style=for-the-badge)](https://compilerx.vercel.app)
-[![AI Powered](https://img.shields.io/badge/AI-Neural%20Engine-00ff9f?style=for-the-badge&logo=google-gemini)](https://compilerx.vercel.app)
+[![Vercel Mirror](https://img.shields.io/badge/Vercel-Mirror-00f3ff?style=for-the-badge&logo=vercel)](https://compilerrx.vercel.app)
+[![Netlify Mirror](https://img.shields.io/badge/Netlify-Mirror-22c55e?style=for-the-badge&logo=netlify)](https://compilerx.netlify.app)
+[![AI Powered](https://img.shields.io/badge/AI-Neural%20Engine-bc13fe?style=for-the-badge&logo=google-gemini)](https://compilerrx.vercel.app)
 
 **The Future of Evolutionary Cloud Development.**  
 *Code Smarter. Build Faster. Think Extreme.*

@@ -2,4 +2,5 @@ User-agent: *
 Allow: /
 Allow: /editor
 
-Sitemap: https://compilerx.vercel.app/sitemap.xml
+Sitemap: https://compilerrx.vercel.app/sitemap.xml
+Sitemap: https://compilerx.netlify.app/sitemap.xml
